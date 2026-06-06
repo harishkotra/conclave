@@ -56,7 +56,7 @@ async function pollAndVote(wallet: ethers.Wallet, provider: ethers.JsonRpcProvid
       console.log(`[agent ${wallet.address.slice(0, 8)}] round ${id} → score ${score} (encrypting...)`);
 
       const cofheClient = await buildAgentContext(wallet);
-      const [encrypted] = await cofheClient.encryptInputs([Encryptable.uint32(score)]).execute();
+      const [encrypted] = await cofheClient.encryptInputs([Encryptable.uint32(BigInt(score))]).execute();
 
       const tx = await agentContract.submitVote(id, encrypted);
       await tx.wait();
@@ -80,7 +80,7 @@ async function pollAndVote(wallet: ethers.Wallet, provider: ethers.JsonRpcProvid
       console.log(`[agent ${wallet.address.slice(0, 8)}] round ${id} → revised score ${newScore} (encrypting...)`);
 
       const cofheClient = await buildAgentContext(wallet);
-      const [encrypted] = await cofheClient.encryptInputs([Encryptable.uint32(newScore)]).execute();
+      const [encrypted] = await cofheClient.encryptInputs([Encryptable.uint32(BigInt(newScore))]).execute();
 
       const tx = await agentContract.reviseVote(id, encrypted);
       await tx.wait();
