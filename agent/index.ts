@@ -16,6 +16,20 @@ const POLL_INTERVAL = 30_000;
 
 enum Phase { Voting = 0, Revision = 1, Finalized = 2, Revealed = 3 }
 
+async function withRetry<T>(fn: () => Promise<T>, attempt = 1): Promise<T> {
+  try {
+    return await fn();
+  } catch (e: any) {
+    if (e?.code === "BAD_DATA" && attempt < 6) {
+      const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 30_000);
+      console.log(`RPC rate limited, retrying in ${Math.round(delay)}ms (attempt ${attempt})`);
+      await new Promise((r) => setTimeout(r, delay));
+      return withRetry(fn, attempt + 1);
+    }
+    throw e;
+  }
+}
+
 async function buildAgentContext(wallet: ethers.Wallet) {
   const { publicClient, walletClient } = await Ethers6Adapter(wallet.provider!, wallet);
   const config = createCofheConfig({
@@ -31,18 +45,18 @@ async function buildAgentContext(wallet: ethers.Wallet) {
 async function pollAndVote(wallet: ethers.Wallet, provider: ethers.JsonRpcProvider) {
   const contract = new ethers.Contract(CONTRACT_ADDR, CONCLAVE_ABI.abi, provider);
   const agentContract = contract.connect(wallet) as ethers.Contract;
-  const roundCount: bigint = await contract.roundCount();
+  const roundCount: bigint = await withRetry(() => contract.roundCount());
 
   for (let id = 1n; id <= roundCount; id++) {
-    const round = await contract.getRound(id);
+    const round = await withRetry(() => contract.getRound(id));
     const phase: Phase = Number(round.phase);
 
     if (phase === Phase.Finalized || phase === Phase.Revealed) continue;
-    if (!(await contract.isAgent(id, wallet.address))) continue;
+    if (!(await withRetry(() => contract.isAgent(id, wallet.address)))) continue;
 
     // ── Voting phase ────────────────────────────────────────────────────────
     if (phase === Phase.Voting) {
-      if (await contract.hasVoted(id, wallet.address)) continue;
+      if (await withRetry(() => contract.hasVoted(id, wallet.address))) continue;
 
       let task: Task;
       try {
@@ -65,8 +79,8 @@ async function pollAndVote(wallet: ethers.Wallet, provider: ethers.JsonRpcProvid
 
     // ── Revision phase ──────────────────────────────────────────────────────
     if (phase === Phase.Revision) {
-      if (!await contract.hasVoted(id, wallet.address)) continue;
-      if (await contract.hasRevised(id, wallet.address)) continue;
+      if (!await withRetry(() => contract.hasVoted(id, wallet.address))) continue;
+      if (await withRetry(() => contract.hasRevised(id, wallet.address))) continue;
 
       let task: Task;
       try {
@@ -114,8 +128,12 @@ async function main() {
   console.log(`Contract: ${CONTRACT_ADDR}`);
 
   const run = () => pollAndVote(wallet, provider).catch((e) => console.error("Poll error:", e));
-  run();
-  setInterval(run, POLL_INTERVAL);
+
+  const stagger = Math.random() * 5000;
+  setTimeout(() => {
+    run();
+    setInterval(run, POLL_INTERVAL + Math.random() * 5000);
+  }, stagger);
 }
 
 main().catch((e) => {
