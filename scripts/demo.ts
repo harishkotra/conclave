@@ -39,6 +39,25 @@ const DEMO_TASK = {
   content: "Conclave: confidential multi-agent consensus via FHE. Agents score tasks without seeing each other's scores.",
 };
 
+// ─── Gas policy — use current base fee with a small tip ──────────────────────
+
+type Overrides = { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint };
+
+async function gasOverrides(provider: ethers.Provider): Promise<Overrides> {
+  const fee = await provider.getFeeData();
+  const maxPriorityFeePerGas = (fee.maxPriorityFeePerGas ?? ethers.parseUnits("2", "gwei"));
+  const baseFee = (fee.maxFeePerGas ?? ethers.parseUnits("50", "gwei")) - maxPriorityFeePerGas;
+  return {
+    maxFeePerGas:         baseFee * 2n + maxPriorityFeePerGas,  // 2x base + tip
+    maxPriorityFeePerGas,
+  };
+}
+
+async function send(tx: Promise<ethers.ContractTransactionResponse>): Promise<ethers.ContractTransactionReceipt> {
+  const sent = await (await tx).wait();
+  return sent!;
+}
+
 // ─── CoFHE client per wallet ─────────────────────────────────────────────────
 
 async function makeCofheClient(wallet: ethers.Wallet) {
@@ -87,6 +106,7 @@ async function main() {
   const agents = agentKeys.map((k) => new ethers.Wallet(k!, provider));
 
   const contract = new ethers.Contract(CONTRACT_ADDR, ARTIFACT.abi, creator);
+  const OVERRIDES = await gasOverrides(provider);
 
   banner("CONCLAVE v3 — Sepolia Integration Demo");
   log(`Contract : ${CONTRACT_ADDR}`);
@@ -102,7 +122,8 @@ async function main() {
   const createTx = await contract.createRound(
     agents.map((a) => a.address),
     TASK_URI,
-    true
+    true,
+    OVERRIDES
   );
   const createReceipt = await createTx.wait();
   const roundId: bigint = await contract.roundCount();
@@ -126,8 +147,7 @@ async function main() {
 
     const enc = await encryptScore(agents[i], score);
     const agentContract = contract.connect(agents[i]) as ethers.Contract;
-    const tx = await agentContract.submitVote(roundId, enc);
-    await tx.wait();
+    await send(agentContract.submitVote(roundId, enc, OVERRIDES));
     log(`Agent ${i + 1}: vote submitted (score sealed in ciphertext)`);
   }
 
@@ -142,8 +162,7 @@ async function main() {
   log("  FHE.sub(encryptedSum, oldScore) → FHE.add(result, newScore)");
   log("All arithmetic is over ciphertexts — no plaintext is ever computed.");
 
-  const openTx = await contract.openRevisionPhase(roundId);
-  await openTx.wait();
+  await send(contract.openRevisionPhase(roundId, OVERRIDES));
   log("Revision phase open.");
 
   // ── 4. Revision phase ──────────────────────────────────────────────────────
@@ -163,8 +182,7 @@ async function main() {
 
     const enc = await encryptScore(agents[i], newScore);
     const agentContract = contract.connect(agents[i]) as ethers.Contract;
-    const tx = await agentContract.reviseVote(roundId, enc);
-    await tx.wait();
+    await send(agentContract.reviseVote(roundId, enc, OVERRIDES));
     log(`Agent ${i + 1}: revision submitted`);
   }
 
@@ -175,8 +193,7 @@ async function main() {
   banner("Phase 5 — Finalize");
   log("Computing FHE.div(encryptedSum, encryptedCount) …");
 
-  const finalizeTx = await contract.finalizeRound(roundId);
-  await finalizeTx.wait();
+  await send(contract.finalizeRound(roundId, OVERRIDES));
   log("Round finalized. Consensus handle ready for threshold decryption.");
 
   // ── 6. Reveal ──────────────────────────────────────────────────────────────
@@ -188,10 +205,9 @@ async function main() {
   const result = await revealClient.decryptForTx(ctHash).withoutPermit().execute();
   log(`Threshold Network returned plaintext: ${result.decryptedValue}`);
 
-  const revealTx = await contract.revealConsensus(
-    roundId, result.ctHash, result.decryptedValue, result.signature
-  );
-  await revealTx.wait();
+  await send(contract.revealConsensus(
+    roundId, result.ctHash, result.decryptedValue, result.signature, OVERRIDES
+  ));
 
   // ── 7. Summary ─────────────────────────────────────────────────────────────
   banner("RESULT");
