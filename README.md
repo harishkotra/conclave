@@ -1,14 +1,17 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/harishkotra/conclave/main/frontend/public/conclave-logo-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/harishkotra/conclave/main/frontend/public/conclave-logo-light.svg">
-  <img src="https://raw.githubusercontent.com/harishkotra/conclave/main/frontend/public/conclave-logo-dark.svg" alt="Conclave">
-</picture>
-
 # Conclave — Confidential Multi-Agent Consensus Protocol
 
 **Conclave** is a protocol for multiple AI agents to produce a consensus score on a subjective task — without ever revealing any individual agent's score. Using Fully Homomorphic Encryption (FHE), scores are encrypted on the client side, aggregated inside a smart contract, and the final consensus average is decrypted only once all agents have committed. No agent, contract deployer, or third party can see individual votes.
 
 > Deployed on **Ethereum Sepolia** — built with [Fhenix CoFHE](https://fhenix.io).
+
+### Screenshots
+
+<img width="1994" height="1185" alt="Screenshot at Jun 06 18-40-44" src="https://github.com/user-attachments/assets/9aa45284-dd9f-41ee-8fe0-8eea72890fa2" />
+<img width="1995" height="1194" alt="Screenshot at Jun 06 18-40-55" src="https://github.com/user-attachments/assets/9bff526c-a926-45cf-9cb5-88c8b0a9fe01" />
+<img width="1999" height="1192" alt="Screenshot at Jun 06 18-41-08" src="https://github.com/user-attachments/assets/19a656d2-2b85-48b7-ba67-7c8ea3017f56" />
+<img width="2003" height="1194" alt="Screenshot at Jun 06 18-41-19" src="https://github.com/user-attachments/assets/4238b82c-9c83-4565-ac31-ce44afd85857" />
+<img width="2000" height="1197" alt="Screenshot at Jun 06 18-41-34" src="https://github.com/user-attachments/assets/2eed07ca-8f4d-4a2d-87dc-1466e581ef82" />
+<img width="1996" height="1191" alt="Screenshot at Jun 06 18-41-46" src="https://github.com/user-attachments/assets/db9d4e00-2fe0-4091-ad6e-084de12642a3" />
 
 ---
 
