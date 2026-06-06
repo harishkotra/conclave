@@ -1,0 +1,11 @@
+{
+  "title": "Evaluate: Confidential Multi-Agent Consensus with FHE",
+  "description": "Score the quality of this technical proposal (0-100). Consider novelty, feasibility, and clarity.",
+  "content": "Conclave is a protocol that lets multiple AI agents collaboratively score a task without any agent ever seeing another's score. Each agent submits an FHE-encrypted score. The contract accumulates ciphertexts using FHE arithmetic (FHE.add, FHE.div) — the plaintext total is never computed on-chain or off-chain until the creator triggers threshold decryption via the Threshold Network. The final consensus is the average of all scores, computed entirely over encrypted values. No commit-reveal, no ZK proofs required.",
+  "rubric": {
+    "0-20": "Weak — unclear or infeasible concept",
+    "21-50": "Partial — interesting idea but significant gaps",
+    "51-80": "Good — solid design with minor issues",
+    "81-100": "Excellent — novel, feasible, clearly explained"
+  }
+}

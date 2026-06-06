@@ -1,0 +1,54 @@
+# ─── Environment ──────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── Hardhat / Solidity ───────────────────────────────────────────────────────
+artifacts/
+cache/
+typechain-types/
+coverage/
+coverage.json
+
+# ─── Next.js frontend ─────────────────────────────────────────────────────────
+frontend/.next/
+frontend/out/
+
+# ─── Build output ─────────────────────────────────────────────────────────────
+dist/
+build/
+
+# ─── IDE / Editor ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+
+# ─── AI Agent files (not for public repo) ─────────────────────────────────────
+.agents/
+.claude/
+skills-lock.json
+
+# ─── Project planning / spec docs (internal only) ─────────────────────────────
+IMPLEMENTATION_PLAN.md
+TASKS.md
+SPEC.md
+conclave-v3-migration.md
+conclave-diagram.html
+
+# ─── Debug logs ───────────────────────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── TypeScript ───────────────────────────────────────────────────────────────
+*.tsbuildinfo
