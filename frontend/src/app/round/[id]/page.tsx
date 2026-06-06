@@ -120,6 +120,9 @@ export default function RoundPage() {
   const { round, isLoading } = useRound(roundId);
   const { isAgent, hasVoted, hasRevised } = useAgentStatus(roundId, address);
 
+  const isCreator = address && round ? address.toLowerCase() === round.creator.toLowerCase() : false;
+  const taskData = useMemo(() => round ? parseTaskURI(round.taskURI) : null, [round?.taskURI]);
+
   if (isLoading || !round) {
     return (
       <div className="max-w-4xl">
@@ -131,9 +134,6 @@ export default function RoundPage() {
       </div>
     );
   }
-
-  const isCreator = address?.toLowerCase() === round.creator.toLowerCase();
-  const taskData = useMemo(() => parseTaskURI(round.taskURI), [round.taskURI]);
 
   return (
     <div className="max-w-4xl">
