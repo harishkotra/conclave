@@ -293,7 +293,7 @@ npx hardhat test
 npx hardhat run scripts/deploy.ts --network sepolia
 ```
 
-Deployed at **`0x0C83824a9800f9ED1e22ec289CB67E065ceA73C2`** (Sepolia, v3).
+Deployed at **`0x0C83824a9800f9ED1e22ec289CB67E065ceA73C2`** (Sepolia)[https://sepolia.etherscan.io/address/0x0C83824a9800f9ED1e22ec289CB67E065ceA73C2].
 
 ### Prerequisites
 
