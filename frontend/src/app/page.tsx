@@ -231,59 +231,51 @@ function LandingPage() {
       <section className="py-14 border-b border-[#1A1F3A]">
         <p className="text-xs font-semibold text-[#475569] tracking-widest uppercase mb-6">How Consensus Forms</p>
         <div className="glass rounded-xl p-8">
-          <svg viewBox="0 0 700 200" className="w-full max-w-[700px]" fill="none">
-            {/* Agent A */}
-            <g>
-              <circle cx="60" cy="30" r="20" fill="rgba(192,132,252,0.1)" stroke="#c084fc" strokeWidth="1" />
-              <text x="60" y="34" textAnchor="middle" fill="#c084fc" fontSize="9" fontFamily="monospace">A</text>
-              <text x="60" y="62" textAnchor="middle" fill="#475569" fontSize="8">Agent A</text>
-              {/* Encrypted score packet */}
-              <rect x="45" y="72" width="30" height="16" rx="3" fill="rgba(192,132,252,0.15)" stroke="rgba(192,132,252,0.3)" strokeWidth="0.5" style={{ animation: "data-packet 2.5s ease-in-out 0s infinite" }} />
-              <text x="60" y="83" textAnchor="middle" fill="#c084fc" fontSize="6" fontFamily="monospace" opacity="0.6">72</text>
-            </g>
+          <svg viewBox="0 0 700 280" className="w-full max-w-[700px]" fill="none">
+            {/* ── Agents row ── */}
+            {[
+              { cx: 80,  label: "A", score: "72" },
+              { cx: 350, label: "B", score: "85" },
+              { cx: 620, label: "C", score: "63" },
+            ].map((a, i) => (
+              <g key={i}>
+                <circle cx={a.cx} cy={30} r="18" fill="rgba(192,132,252,0.1)" stroke="#c084fc" strokeWidth="1" />
+                <text x={a.cx} y={34} textAnchor="middle" fill="#c084fc" fontSize="10" fontFamily="monospace" fontWeight="600">{a.label}</text>
+                <text x={a.cx} y={60} textAnchor="middle" fill="#475569" fontSize="8">Agent {a.label}</text>
+                {/* Animated packet that travels down */}
+                <g style={{ animation: `data-packet 2.5s ease-in-out ${i * 0.4}s infinite` }}>
+                  <rect x={a.cx - 16} y={70} width="32" height="20" rx="4" fill="rgba(192,132,252,0.15)" stroke="rgba(192,132,252,0.3)" strokeWidth="0.5" />
+                  <text x={a.cx} y={83} textAnchor="middle" fill="#c084fc" fontSize="7" fontFamily="monospace" opacity="0.7">{a.score}</text>
+                </g>
+              </g>
+            ))}
 
-            {/* Agent B */}
-            <g>
-              <circle cx="350" cy="30" r="20" fill="rgba(192,132,252,0.1)" stroke="#c084fc" strokeWidth="1" />
-              <text x="350" y="34" textAnchor="middle" fill="#c084fc" fontSize="9" fontFamily="monospace">B</text>
-              <text x="350" y="62" textAnchor="middle" fill="#475569" fontSize="8">Agent B</text>
-              <rect x="335" y="72" width="30" height="16" rx="3" fill="rgba(192,132,252,0.15)" stroke="rgba(192,132,252,0.3)" strokeWidth="0.5" style={{ animation: "data-packet 2.5s ease-in-out 0.5s infinite" }} />
-              <text x="350" y="83" textAnchor="middle" fill="#c084fc" fontSize="6" fontFamily="monospace" opacity="0.6">85</text>
-            </g>
+            {/* ── Vertical flow lines from agents ── */}
+            <line x1="80"  y1="54" x2="80"  y2="130" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
+            <line x1="350" y1="54" x2="350" y2="130" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
+            <line x1="620" y1="54" x2="620" y2="130" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
 
-            {/* Agent C */}
-            <g>
-              <circle cx="640" cy="30" r="20" fill="rgba(192,132,252,0.1)" stroke="#c084fc" strokeWidth="1" />
-              <text x="640" y="34" textAnchor="middle" fill="#c084fc" fontSize="9" fontFamily="monospace">C</text>
-              <text x="640" y="62" textAnchor="middle" fill="#475569" fontSize="8">Agent C</text>
-              <rect x="625" y="72" width="30" height="16" rx="3" fill="rgba(192,132,252,0.15)" stroke="rgba(192,132,252,0.3)" strokeWidth="0.5" style={{ animation: "data-packet 2.5s ease-in-out 1s infinite" }} />
-              <text x="640" y="83" textAnchor="middle" fill="#c084fc" fontSize="6" fontFamily="monospace" opacity="0.6">63</text>
-            </g>
+            {/* ── FHE computation box ── */}
+            <rect x="100" y="134" width="500" height="48" rx="6" fill="rgba(10,15,42,0.8)" stroke="#1A1F3A" strokeWidth="1" />
+            <text x="350" y="150" textAnchor="middle" fill="#64748b" fontSize="10" fontFamily="monospace">FHE.add(72) + FHE.add(85) + FHE.add(63)</text>
+            <text x="350" y="164" textAnchor="middle" fill="#c084fc" fontSize="10" fontFamily="monospace">FHE.div(220, 3) → encrypted handle</text>
+            <text x="350" y="176" textAnchor="middle" fill="#334155" fontSize="8">All arithmetic over ciphertexts · No plaintext</text>
 
-            {/* Down arrows */}
-            <line x1="60" y1="92" x2="60" y2="120" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
-            <polygon points="57,117 60,124 63,117" fill="#334155" />
-            <line x1="350" y1="92" x2="350" y2="120" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
-            <polygon points="347,117 350,124 353,117" fill="#334155" />
-            <line x1="640" y1="92" x2="640" y2="120" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
-            <polygon points="637,117 640,124 643,117" fill="#334155" />
+            {/* ── Arrow down ── */}
+            <line x1="350" y1="182" x2="350" y2="210" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
+            <polygon points="347,207 350,214 353,207" fill="#334155" />
 
-            {/* FHE computation box */}
-            <rect x="100" y="128" width="500" height="36" rx="6" fill="rgba(10,15,42,0.8)" stroke="#1A1F3A" strokeWidth="1" />
-            <text x="350" y="144" textAnchor="middle" fill="#64748b" fontSize="10" fontFamily="monospace">FHE.add(72) + FHE.add(85) + FHE.add(63) + FHE.div(220, 3)</text>
-            <text x="350" y="156" textAnchor="middle" fill="#334155" fontSize="8" fontFamily="monospace">All ciphertexts · No plaintexts</text>
+            {/* ── Threshold decrypt box ── */}
+            <rect x="200" y="216" width="300" height="28" rx="6" fill="rgba(10,15,42,0.8)" stroke="#1A1F3A" strokeWidth="1" />
+            <text x="350" y="233" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="monospace">Threshold Network: decrypt(handle) → 79</text>
 
-            {/* Down arrow */}
-            <line x1="350" y1="164" x2="350" y2="180" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
-            <polygon points="347,177 350,184 353,177" fill="#334155" />
+            {/* ── Arrow down ── */}
+            <line x1="350" y1="244" x2="350" y2="260" stroke="#1A1F3A" strokeWidth="1" strokeDasharray="3 3" />
+            <polygon points="347,257 350,264 353,257" fill="#334155" />
 
-            {/* Consensus result */}
-            <rect x="260" y="186" width="180" height="32" rx="16" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.25)" strokeWidth="1" style={{ animation: "consensus-appear 0.6s ease-out 3s both" }} />
-            <text x="350" y="202" textAnchor="middle" fill="#22c55e" fontSize="11" fontFamily="monospace" fontWeight="700" style={{ animation: "fade-in 0.4s ease-out 3.5s both" }}>Consensus: 73 / 100</text>
-
-            {/* Dashed connector lines from agents to FHE box */}
-            <line x1="60" y1="100" x2="350" y2="128" stroke="#1A1F3A" strokeWidth="0.5" strokeDasharray="2 4" opacity="0.3" />
-            <line x1="640" y1="100" x2="350" y2="128" stroke="#1A1F3A" strokeWidth="0.5" strokeDasharray="2 4" opacity="0.3" />
+            {/* ── Consensus result ── */}
+            <rect x="260" y="264" width="180" height="28" rx="14" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.25)" strokeWidth="1" style={{ animation: "consensus-appear 0.5s ease-out 1.8s both" }} />
+            <text x="350" y="281" textAnchor="middle" fill="#22c55e" fontSize="11" fontFamily="monospace" fontWeight="700" style={{ animation: "fade-in 0.3s ease-out 2.2s both" }}>Consensus: 79 / 100</text>
           </svg>
         </div>
       </section>
