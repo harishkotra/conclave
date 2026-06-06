@@ -11,15 +11,47 @@ import { VoteForm } from "@/components/VoteForm";
 import { FinalizeButton } from "@/components/FinalizeButton";
 import { RevealButton } from "@/components/RevealButton";
 import { ConsensusResult } from "@/components/ConsensusResult";
+import { FhePipeline } from "@/components/FhePipeline";
+import { AgentList } from "@/components/AgentList";
 import { CONCLAVE_ADDRESS, CONCLAVE_ABI } from "@/lib/contract";
 import { Phase } from "@/types/round";
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  VOTING:    { label: "Voting in progress",          color: "text-yellow-400" },
-  REVISION:  { label: "Revision phase open",         color: "text-orange-400" },
-  FINALIZED: { label: "Finalized — ready to reveal", color: "text-blue-400" },
-  REVEALED:  { label: "Consensus revealed",          color: "text-green-400" },
-};
+function ProtocolStrip({ round }: { round: NonNullable<ReturnType<typeof useRound>["round"]> }) {
+  const phases = [
+    { key: "created",  label: "Created", done: true },
+    { key: "voting",   label: "Voting",  done: round.phase > Phase.Voting || (round.phase === Phase.Voting && round.votesSubmitted === round.quorum) },
+    { key: "revision", label: "Revision", done: round.phase > Phase.Revision || (round.phase === Phase.Revision && round.revisionsSubmitted === round.quorum), skip: !round.revisionsEnabled },
+    { key: "final",    label: "Finalized", done: round.phase >= Phase.Finalized },
+    { key: "reveal",   label: "Revealed",  done: round.phase === Phase.Revealed },
+  ];
+
+  return (
+    <div className="glass rounded-xl p-4 mb-6">
+      <div className="flex items-center gap-4">
+        <span className="text-[10px] font-mono text-[#475569] shrink-0">Round #{round.id.toString()}</span>
+        <div className="flex items-center gap-1 flex-wrap">
+          {phases.filter(s => !s.skip).map((s, i) => (
+            <div key={s.key} className="flex items-center gap-1">
+              <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-mono ${
+                s.done ? "bg-[#22c55e]/10 text-[#22c55e]" : "bg-[#1A1F3A]/50 text-[#475569]"
+              }`}>
+                <span className={`w-1 h-1 rounded-full ${s.done ? "bg-[#22c55e]" : "bg-[#475569]"}`} />
+                {s.label}
+              </div>
+              {i < phases.filter(s => !s.skip).length - 1 && (
+                <span className="text-[#1A1F3A] text-[10px]">→</span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-3 text-[10px] text-[#334155] font-mono shrink-0">
+          <span>{round.votesSubmitted}/{round.quorum} votes</span>
+          {round.revisionsEnabled && <span>{round.revisionsSubmitted}/{round.quorum} revisions</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function OpenRevisionButton({ roundId }: { roundId: bigint }) {
   const { writeContract, data: hash, isPending } = useWriteContract();
@@ -29,7 +61,7 @@ function OpenRevisionButton({ roundId }: { roundId: bigint }) {
     <button
       onClick={() => writeContract({ address: CONCLAVE_ADDRESS, abi: CONCLAVE_ABI, functionName: "openRevisionPhase", args: [roundId] })}
       disabled={isPending || isConfirming}
-      className="w-full py-2.5 rounded-lg bg-orange-700 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+      className="w-full text-[11px] px-3 py-2 rounded-md border border-[#1A1F3A] text-[#64748b] hover:text-[#94a3b8] hover:border-[#334155] disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
     >
       {isPending || isConfirming ? "Opening…" : "Open Revision Phase"}
     </button>
@@ -43,42 +75,36 @@ function ReviseForm({ roundId }: { roundId: bigint }) {
 
   if (isSuccess) {
     return (
-      <div className="rounded-xl border border-orange-800/50 bg-orange-900/20 p-4">
-        <p className="text-sm text-orange-300">Revision submitted.</p>
+      <div className="rounded-lg border border-[#c084fc]/20 bg-[#c084fc]/5 px-4 py-3">
+        <p className="text-xs text-[#c084fc]">Revision submitted.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-orange-800/50 bg-slate-800/50 p-5 space-y-4">
+    <div className="glass rounded-xl p-5 space-y-4">
       <div>
-        <p className="text-sm font-medium text-slate-300 mb-0.5">Revise your score</p>
-        <p className="text-xs text-slate-500">
-          The round is in revision. Submit an updated score — you are computing on the group's encrypted
-          signal without seeing it. Your new score replaces your old one.
+        <p className="text-sm font-medium text-[#e2e8f0] mb-0.5">Revise your score</p>
+        <p className="text-xs text-[#475569]">
+          The round is in revision. Your new score replaces your old one — all arithmetic is over ciphertexts.
         </p>
       </div>
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center justify-between text-[11px] text-[#64748b]">
           <span>Score</span>
-          <span className="font-mono font-bold text-orange-300">{score}</span>
+          <span className="font-mono font-bold text-[#c084fc]">{score}</span>
         </div>
         <input
-          type="range"
-          min={0}
-          max={100}
-          value={score}
+          type="range" min={0} max={100} value={score}
           onChange={(e) => setScore(Number(e.target.value))}
-          className="w-full accent-orange-500"
+          className="w-full accent-[#c084fc]"
         />
       </div>
-      {error && (
-        <p className="text-xs text-red-400">{(error as any).shortMessage ?? error.message}</p>
-      )}
+      {error && <p className="text-xs text-red-400">{(error as any).shortMessage ?? error.message}</p>}
       <button
         onClick={() => walletClient && revise(roundId, score, walletClient)}
         disabled={isPending || !walletClient}
-        className="w-full py-2 rounded-lg bg-orange-700 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+        className="w-full text-[11px] px-3 py-2 rounded-md border border-[#1A1F3A] text-[#64748b] hover:text-[#94a3b8] hover:border-[#334155] disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
       >
         {isPending ? "Submitting revision…" : "Submit Revision"}
       </button>
@@ -95,144 +121,146 @@ export default function RoundPage() {
 
   if (isLoading || !round) {
     return (
-      <div className="max-w-2xl">
+      <div className="max-w-4xl">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-slate-800 rounded w-1/4" />
-          <div className="h-4 bg-slate-800 rounded w-2/3" />
-          <div className="h-32 bg-slate-800 rounded-xl" />
+          <div className="h-6 bg-[#1A1F3A] rounded w-1/4" />
+          <div className="h-4 bg-[#1A1F3A] rounded w-2/3" />
+          <div className="h-32 bg-[#1A1F3A] rounded-xl" />
         </div>
       </div>
     );
   }
 
   const isCreator = address?.toLowerCase() === round.creator.toLowerCase();
-  const { label, color } = STATUS_LABELS[round.status];
-  const progress = Math.round((round.votesSubmitted / round.quorum) * 100);
-  const revisionProgress = round.quorum > 0
-    ? Math.round((round.revisionsSubmitted / round.quorum) * 100)
-    : 0;
 
   return (
-    <div className="max-w-2xl space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-          <Link href="/" className="hover:text-slate-300 transition-colors">Rounds</Link>
-          <span>/</span>
-          <span>#{roundId.toString()}</span>
-        </div>
-        <h1 className="text-2xl font-bold mb-1">Round #{roundId.toString()}</h1>
-        <p className={`text-sm font-medium ${color}`}>{label}</p>
+    <div className="max-w-4xl">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-[11px] text-[#475569] mb-4">
+        <Link href="/" className="hover:text-[#64748b] transition-colors">Rounds</Link>
+        <span>/</span>
+        <span className="text-[#64748b]">Round #{roundId.toString()}</span>
       </div>
 
-      {/* Task */}
-      <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-5">
-        <p className="text-xs text-slate-500 mb-1">Task URI</p>
-        <a
-          href={round.taskURI}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-violet-400 hover:text-violet-300 font-mono break-all transition-colors"
-        >
-          {round.taskURI}
-        </a>
-      </div>
+      {/* Protocol status strip */}
+      <ProtocolStrip round={round} />
 
-      {/* Voting progress */}
-      <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-5">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm text-slate-400">Voting progress</span>
-          <span className="text-sm font-mono text-slate-300">
-            {round.votesSubmitted} / {round.quorum} agents
-          </span>
-        </div>
-        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-          <div className="h-full bg-violet-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
+      {/* Mission control: two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left column — protocol execution flow */}
+        <div className="lg:col-span-2 space-y-6">
+          <FhePipeline
+            phase={round.phase}
+            votesSubmitted={round.votesSubmitted}
+            quorum={round.quorum}
+            consensusScore={round.status === "REVEALED" ? round.consensusScore : null}
+          />
 
-      {/* Revision progress (only when relevant) */}
-      {(round.phase === Phase.Revision || (round.phase >= Phase.Finalized && round.revisionsEnabled)) && (
-        <div className="rounded-xl border border-orange-800/40 bg-slate-800/50 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-slate-400">Revision progress</span>
-            <span className="text-sm font-mono text-slate-300">
-              {round.revisionsSubmitted} / {round.quorum} agents
-            </span>
+          {/* Agent actions */}
+          {isConnected && isAgent && !hasVoted && round.phase === Phase.Voting && (
+            <div>
+              <p className="text-[10px] font-semibold tracking-widest text-[#475569] uppercase mb-3">Your Vote</p>
+              <VoteForm roundId={roundId} />
+            </div>
+          )}
+          {isConnected && isAgent && hasVoted && round.phase === Phase.Voting && (
+            <div className="glass rounded-xl p-5">
+              <p className="text-xs text-[#475569]">Vote submitted. Waiting for other agents…</p>
+            </div>
+          )}
+          {isConnected && isAgent && hasVoted && !hasRevised && round.phase === Phase.Revision && (
+            <div>
+              <p className="text-[10px] font-semibold tracking-widest text-[#475569] uppercase mb-3">Your Revision</p>
+              <ReviseForm roundId={roundId} />
+            </div>
+          )}
+          {isConnected && isAgent && hasRevised && round.phase === Phase.Revision && (
+            <div className="glass rounded-xl p-5">
+              <p className="text-xs text-[#475569]">Revision submitted. Waiting for other agents…</p>
+            </div>
+          )}
+
+          {/* Creator actions */}
+          {isConnected && isCreator && (
+            <div className="glass rounded-xl p-5 space-y-3">
+              <p className="text-[10px] font-semibold tracking-widest text-[#475569] uppercase">Creator Actions</p>
+              {round.phase === Phase.Voting && round.votesSubmitted === round.quorum && round.revisionsEnabled && (
+                <OpenRevisionButton roundId={roundId} />
+              )}
+              {(round.phase === Phase.Voting && round.votesSubmitted === round.quorum && !round.revisionsEnabled) && (
+                <FinalizeButton roundId={roundId} />
+              )}
+              {round.phase === Phase.Revision && <FinalizeButton roundId={roundId} />}
+              {round.phase === Phase.Finalized && <RevealButton roundId={roundId} />}
+              {round.phase === Phase.Revealed && (
+                <p className="text-xs text-[#334155]">Round complete.</p>
+              )}
+            </div>
+          )}
+
+          {/* Completed stages */}
+          {round.status === "REVEALED" && <ConsensusResult score={round.consensusScore} quorum={round.quorum} />}
+        </div>
+
+        {/* Right column — telemetry panel */}
+        <div className="space-y-6">
+          <AgentList roundId={roundId} />
+
+          {/* Protocol telemetry */}
+          <div className="glass rounded-xl p-5">
+            <p className="text-[10px] font-semibold tracking-widest text-[#475569] uppercase mb-4">Telemetry</p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#475569]">Participation</span>
+                <span className="text-xs font-mono text-[#64748b]">{round.votesSubmitted}/{round.quorum}</span>
+              </div>
+              {round.revisionsEnabled && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-[#475569]">Revisions</span>
+                  <span className="text-xs font-mono text-[#64748b]">{round.revisionsSubmitted}/{round.quorum}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#475569]">Ciphertexts</span>
+                <span className="text-xs font-mono text-[#64748b]">{round.votesSubmitted + round.revisionsSubmitted}</span>
+              </div>
+              {round.revisionsEnabled && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-[#475569]">Revision round</span>
+                  <span className="text-xs font-mono text-[#64748b]">{round.revisionsEnabled ? "enabled" : "disabled"}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#475569]">Status</span>
+                <span className="text-xs font-mono text-[#64748b]">{round.status.toLowerCase()}</span>
+              </div>
+              {round.status === "REVEALED" && (
+                <div className="flex items-center justify-between pt-2 border-t border-[#1A1F3A]">
+                  <span className="text-[11px] text-[#475569]">Consensus</span>
+                  <span className="text-sm font-bold text-[#22c55e]">{round.consensusScore}</span>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-            <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${revisionProgress}%` }} />
+
+          {/* Round info */}
+          <div className="glass rounded-xl p-5">
+            <p className="text-[10px] font-semibold tracking-widest text-[#475569] uppercase mb-3">Details</p>
+            <div className="space-y-2 text-[11px]">
+              <div>
+                <p className="text-[#334155]">Creator</p>
+                <p className="font-mono text-[#475569] truncate">{round.creator}</p>
+              </div>
+              <div>
+                <p className="text-[#334155]">Created</p>
+                <p className="text-[#475569]">{new Date(Number(round.createdAt) * 1000).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <p className="text-[#334155]">Task</p>
+                <p className="font-mono text-[#475569] truncate text-[10px]">{round.taskURI}</p>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Revealed */}
-      {round.status === "REVEALED" && (
-        <ConsensusResult score={round.consensusScore} quorum={round.quorum} />
-      )}
-
-      {/* Agent: vote */}
-      {isConnected && isAgent && !hasVoted && round.phase === Phase.Voting && (
-        <div>
-          <h2 className="text-sm font-medium text-slate-400 mb-3">Your vote</h2>
-          <VoteForm roundId={roundId} />
-        </div>
-      )}
-
-      {isConnected && isAgent && hasVoted && round.phase === Phase.Voting && (
-        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Vote submitted. Waiting for other agents…</p>
-        </div>
-      )}
-
-      {/* Agent: revise */}
-      {isConnected && isAgent && hasVoted && !hasRevised && round.phase === Phase.Revision && (
-        <ReviseForm roundId={roundId} />
-      )}
-
-      {isConnected && isAgent && hasRevised && round.phase === Phase.Revision && (
-        <div className="rounded-xl border border-orange-800/40 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Revision submitted. Waiting for other agents…</p>
-        </div>
-      )}
-
-      {/* Creator actions */}
-      {isConnected && isCreator && (
-        <div>
-          <h2 className="text-sm font-medium text-slate-400 mb-3">Creator actions</h2>
-          <div className="space-y-3">
-            {/* Open revision phase: voting done + revisions enabled */}
-            {round.phase === Phase.Voting && round.votesSubmitted === round.quorum && round.revisionsEnabled && (
-              <OpenRevisionButton roundId={roundId} />
-            )}
-            {/* Finalize: voting done + no revisions, OR revision phase open */}
-            {round.phase === Phase.Voting && round.votesSubmitted === round.quorum && !round.revisionsEnabled && (
-              <FinalizeButton roundId={roundId} />
-            )}
-            {round.phase === Phase.Revision && (
-              <FinalizeButton roundId={roundId} />
-            )}
-            {round.phase === Phase.Finalized && (
-              <RevealButton roundId={roundId} />
-            )}
-            {round.phase === Phase.Revealed && (
-              <p className="text-sm text-slate-500">Round complete.</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Info row */}
-      <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
-        <div className="rounded-lg border border-slate-800 p-3">
-          <p className="mb-0.5">Creator</p>
-          <p className="font-mono text-slate-400 truncate">{round.creator}</p>
-        </div>
-        <div className="rounded-lg border border-slate-800 p-3">
-          <p className="mb-0.5">Created</p>
-          <p className="text-slate-400">
-            {new Date(Number(round.createdAt) * 1000).toLocaleDateString()}
-          </p>
         </div>
       </div>
     </div>

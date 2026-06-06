@@ -5,9 +5,30 @@ import { useRouter } from "next/navigation";
 import { useWriteContract, useWaitForTransactionReceipt, usePublicClient } from "wagmi";
 import { CONCLAVE_ADDRESS, CONCLAVE_ABI } from "@/lib/contract";
 
+const STEPS = ["Task", "Agents", "Rules", "Launch"];
+
+function StepIndicator({ current, step }: { current: number; step: number }) {
+  const status = step < current ? "done" : step === current ? "active" : "pending";
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-mono font-medium ${
+        status === "done" ? "bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20" :
+        status === "active" ? "bg-[#c084fc]/10 text-[#c084fc] border border-[#c084fc]/20" :
+        "bg-[#1A1F3A]/50 text-[#475569] border border-[#1A1F3A]"
+      }`}>
+        {status === "done" ? "✓" : step + 1}
+      </div>
+      <span className={`text-xs ${
+        status === "done" ? "text-[#64748b]" : status === "active" ? "text-[#e2e8f0]" : "text-[#475569]"
+      }`}>{STEPS[step]}</span>
+    </div>
+  );
+}
+
 export default function CreatePage() {
   const router = useRouter();
   const publicClient = usePublicClient();
+  const [step, setStep] = useState(0);
   const [taskURI, setTaskURI] = useState("");
   const [agents, setAgents] = useState<string[]>(["", ""]);
   const [revisionsEnabled, setRevisionsEnabled] = useState(false);
@@ -15,23 +36,15 @@ export default function CreatePage() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isSuccess, isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
 
-  function addAgent() {
-    if (agents.length < 50) setAgents((a) => [...a, ""]);
-  }
+  function addAgent() { if (agents.length < 50) setAgents((a) => [...a, ""]); }
+  function removeAgent(i: number) { if (agents.length > 2) setAgents((a) => a.filter((_, idx) => idx !== i)); }
+  function setAgent(i: number, val: string) { setAgents((a) => a.map((v, idx) => (idx === i ? val : v))); }
 
-  function removeAgent(i: number) {
-    if (agents.length > 2) setAgents((a) => a.filter((_, idx) => idx !== i));
-  }
-
-  function setAgent(i: number, val: string) {
-    setAgents((a) => a.map((v, idx) => (idx === i ? val : v)));
-  }
+  const validAgents = agents.filter((a) => /^0x[0-9a-fA-F]{40}$/.test(a)) as `0x${string}`[];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const validAgents = agents.filter((a) => /^0x[0-9a-fA-F]{40}$/.test(a)) as `0x${string}`[];
-    if (validAgents.length < 2) return;
-    if (!taskURI.trim()) return;
+    if (validAgents.length < 2 || !taskURI.trim()) return;
     writeContract({
       address: CONCLAVE_ADDRESS,
       abi: CONCLAVE_ABI,
@@ -40,7 +53,6 @@ export default function CreatePage() {
     });
   }
 
-  // Redirect after confirmed
   if (isSuccess && hash && publicClient) {
     publicClient.getTransactionReceipt({ hash }).then((receipt) => {
       if (!receipt) return;
@@ -50,10 +62,13 @@ export default function CreatePage() {
 
   if (isSuccess) {
     return (
-      <div className="max-w-xl">
-        <div className="rounded-xl border border-green-800/50 bg-green-900/20 p-6 text-center">
-          <p className="text-green-400 font-medium mb-2">Round created!</p>
-          <button onClick={() => router.push("/")} className="text-sm text-slate-400 hover:text-slate-200 underline">
+      <div className="max-w-xl mx-auto">
+        <div className="glass rounded-xl p-8 text-center">
+          <div className="w-10 h-10 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center mx-auto mb-4">
+            <span className="text-lg text-[#22c55e]">✓</span>
+          </div>
+          <p className="text-sm font-medium text-[#22c55e] mb-2">Round created successfully</p>
+          <button onClick={() => router.push("/")} className="text-xs text-[#475569] hover:text-[#64748b] underline">
             Back to rounds
           </button>
         </div>
@@ -62,101 +77,168 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="max-w-xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Create Round</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Register agents and set a task URI to start a confidential consensus round.
-        </p>
+    <div className="max-w-xl mx-auto">
+      {/* Step navigation */}
+      <div className="flex items-center gap-0 mb-8">
+        {STEPS.map((_, i) => (
+          <div key={i} className="flex items-center">
+            <StepIndicator current={step} step={i} />
+            {i < STEPS.length - 1 && (
+              <div className="w-8 h-px mx-2 bg-[#1A1F3A]" />
+            )}
+          </div>
+        ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Task URI</label>
-          <input
-            type="text"
-            value={taskURI}
-            onChange={(e) => setTaskURI(e.target.value)}
-            placeholder="https://example.com/task.json"
-            className="w-full px-3 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-violet-500 text-sm font-mono"
-            required
-          />
-          <p className="text-xs text-slate-600 mt-1">HTTPS URL or IPFS CID pointing to task JSON</p>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-slate-300">Agent Addresses</label>
-            <span className="text-xs text-slate-600">{agents.length} / 50</span>
-          </div>
-          <div className="space-y-2">
-            {agents.map((addr, i) => (
-              <div key={i} className="flex gap-2">
-                <input
-                  type="text"
-                  value={addr}
-                  onChange={(e) => setAgent(i, e.target.value)}
-                  placeholder="0x…"
-                  className="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-violet-500 text-sm font-mono"
-                />
-                {agents.length > 2 && (
-                  <button
-                    type="button"
-                    onClick={() => removeAgent(i)}
-                    className="px-3 py-2 rounded-lg border border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500 transition-colors text-sm"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={addAgent}
-            className="mt-2 text-sm text-violet-400 hover:text-violet-300 transition-colors"
-          >
-            + Add agent
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-slate-300">Allow revision round?</p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Agents can update scores after all votes are in — revisions computed fully in ciphertext.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setRevisionsEnabled((v) => !v)}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-              revisionsEnabled ? "bg-violet-600" : "bg-slate-600"
-            }`}
-            role="switch"
-            aria-checked={revisionsEnabled}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
-                revisionsEnabled ? "translate-x-5" : "translate-x-0"
-              }`}
+      <form onSubmit={handleSubmit}>
+        {/* Step 0: Task */}
+        {step === 0 && (
+          <div className="glass rounded-xl p-6 space-y-4">
+            <p className="text-xs text-[#475569] font-mono">Step 1 of 4</p>
+            <h2 className="text-lg font-semibold text-[#e2e8f0] tracking-tight">Set Task Source</h2>
+            <p className="text-xs text-[#475569]">HTTPS URL or IPFS CID pointing to the task JSON that agents will evaluate.</p>
+            <input
+              type="text" value={taskURI}
+              onChange={(e) => setTaskURI(e.target.value)}
+              placeholder="https://example.com/task.json"
+              className="w-full px-3 py-2 rounded-lg bg-[#040816] border border-[#1A1F3A] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-[#c084fc]/40 text-sm font-mono transition-colors"
+              required
             />
-          </button>
-        </div>
-
-        {error && (
-          <p className="text-sm text-red-400 bg-red-900/20 border border-red-800/50 rounded-lg px-3 py-2">
-            {(error as any).shortMessage ?? error.message}
-          </p>
+            <div className="flex justify-end">
+              <button type="button" onClick={() => setStep(1)}
+                disabled={!taskURI.trim()}
+                className="text-xs px-3 py-1.5 rounded-md bg-[#c084fc]/10 border border-[#c084fc]/20 text-[#c084fc] hover:bg-[#c084fc]/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
         )}
 
-        <button
-          type="submit"
-          disabled={isPending || isConfirming}
-          className="w-full py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
-        >
-          {isPending || isConfirming ? "Creating…" : "Create Round"}
-        </button>
+        {/* Step 1: Agents */}
+        {step === 1 && (
+          <div className="glass rounded-xl p-6 space-y-4">
+            <p className="text-xs text-[#475569] font-mono">Step 2 of 4</p>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-[#e2e8f0] tracking-tight">Register Agents</h2>
+              <span className="text-[11px] text-[#334155] font-mono">{agents.length} / 50</span>
+            </div>
+            <div className="space-y-2">
+              {agents.map((addr, i) => (
+                <div key={i} className="flex gap-2">
+                  <input type="text" value={addr}
+                    onChange={(e) => setAgent(i, e.target.value)}
+                    placeholder="0x…"
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#040816] border border-[#1A1F3A] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-[#c084fc]/40 text-sm font-mono transition-colors"
+                  />
+                  {agents.length > 2 && (
+                    <button type="button" onClick={() => removeAgent(i)}
+                      className="px-3 py-2 rounded-lg border border-[#1A1F3A] text-[#475569] hover:text-[#64748b] hover:border-[#334155] transition-colors text-sm"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={addAgent}
+              className="text-xs text-[#475569] hover:text-[#64748b] transition-colors"
+            >
+              + Add agent
+            </button>
+            <div className="flex justify-between">
+              <button type="button" onClick={() => setStep(0)}
+                className="text-xs px-3 py-1.5 rounded-md border border-[#1A1F3A] text-[#475569] hover:text-[#64748b] transition-colors font-medium"
+              >
+                Back
+              </button>
+              <button type="button" onClick={() => setStep(2)}
+                disabled={validAgents.length < 2}
+                className="text-xs px-3 py-1.5 rounded-md bg-[#c084fc]/10 border border-[#c084fc]/20 text-[#c084fc] hover:bg-[#c084fc]/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                Continue ({validAgents.length} valid)
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Rules */}
+        {step === 2 && (
+          <div className="glass rounded-xl p-6 space-y-4">
+            <p className="text-xs text-[#475569] font-mono">Step 3 of 4</p>
+            <h2 className="text-lg font-semibold text-[#e2e8f0] tracking-tight">Configure Rules</h2>
+            <div className="flex items-center justify-between rounded-lg border border-[#1A1F3A] bg-[#1A1F3A]/30 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-[#e2e8f0]">Allow revision round</p>
+                <p className="text-xs text-[#475569] mt-0.5">
+                  Agents can update scores after all votes are in. Computations remain fully encrypted.
+                </p>
+              </div>
+              <button type="button"
+                onClick={() => setRevisionsEnabled((v) => !v)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                  revisionsEnabled ? "bg-[#c084fc]" : "bg-[#334155]"
+                }`} role="switch" aria-checked={revisionsEnabled}
+              >
+                <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                  revisionsEnabled ? "translate-x-4" : "translate-x-0"
+                }`} />
+              </button>
+            </div>
+            <div className="flex justify-between">
+              <button type="button" onClick={() => setStep(1)}
+                className="text-xs px-3 py-1.5 rounded-md border border-[#1A1F3A] text-[#475569] hover:text-[#64748b] transition-colors font-medium"
+              >
+                Back
+              </button>
+              <button type="button" onClick={() => setStep(3)}
+                className="text-xs px-3 py-1.5 rounded-md bg-[#c084fc]/10 border border-[#c084fc]/20 text-[#c084fc] hover:bg-[#c084fc]/15 transition-colors font-medium"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Launch */}
+        {step === 3 && (
+          <div className="glass rounded-xl p-6 space-y-4">
+            <p className="text-xs text-[#475569] font-mono">Step 4 of 4</p>
+            <h2 className="text-lg font-semibold text-[#e2e8f0] tracking-tight">Launch Consensus</h2>
+            <div className="rounded-lg border border-[#1A1F3A] bg-[#1A1F3A]/30 p-4 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-[#475569]">Task</span>
+                <span className="text-[#64748b] font-mono truncate ml-4 max-w-[200px]">{taskURI}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#475569]">Agents</span>
+                <span className="text-[#64748b]">{validAgents.length} registered</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#475569]">Revisions</span>
+                <span className="text-[#64748b]">{revisionsEnabled ? "enabled" : "disabled"}</span>
+              </div>
+            </div>
+            {error && (
+              <p className="text-xs text-red-400 bg-red-900/10 border border-red-800/30 rounded-lg px-3 py-2">
+                {(error as any).shortMessage ?? error.message}
+              </p>
+            )}
+            <div className="flex justify-between">
+              <button type="button" onClick={() => setStep(2)}
+                className="text-xs px-3 py-1.5 rounded-md border border-[#1A1F3A] text-[#475569] hover:text-[#64748b] transition-colors font-medium"
+              >
+                Back
+              </button>
+              <button type="submit"
+                disabled={isPending || isConfirming}
+                className="text-xs px-4 py-1.5 rounded-md bg-[#c084fc]/10 border border-[#c084fc]/20 text-[#c084fc] hover:bg-[#c084fc]/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {isPending || isConfirming ? "Creating…" : "Launch Round"}
+              </button>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );

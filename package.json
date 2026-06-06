@@ -5,7 +5,6 @@
   "scripts": {
     "compile": "npx hardhat compile",
     "deploy": "npx hardhat run scripts/deploy.ts --network sepolia",
-    "demo": "npx ts-node --project tsconfig.json scripts/demo.ts",
     "test": "npx hardhat test"
   },
   "devDependencies": {

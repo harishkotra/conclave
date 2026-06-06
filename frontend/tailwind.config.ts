@@ -9,7 +9,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: "#7c3aed",
+        brand: "#c084fc",
+        surface: {
+          DEFAULT: "#070B1F",
+          alt: "#0A0F2A",
+          border: "#1A1F3A",
+        },
+      },
+      fontFamily: {
+        mono: ["SF Mono", "JetBrains Mono", "Fira Code", "monospace"],
       },
     },
   },

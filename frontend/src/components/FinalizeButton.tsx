@@ -9,24 +9,17 @@ export function FinalizeButton({ roundId }: { roundId: bigint }) {
 
   if (isSuccess) {
     return (
-      <div className="rounded-xl border border-blue-800/50 bg-blue-900/20 p-4">
-        <p className="text-blue-400 text-sm font-medium">Round finalized. FHE average computed.</p>
+      <div className="rounded-lg border border-[#22c55e]/20 bg-[#22c55e]/5 px-4 py-3">
+        <p className="text-xs text-[#22c55e] font-medium">Round finalized. FHE average computed.</p>
       </div>
     );
   }
 
   return (
     <button
-      onClick={() =>
-        writeContract({
-          address: CONCLAVE_ADDRESS,
-          abi: CONCLAVE_ABI,
-          functionName: "finalizeRound",
-          args: [roundId],
-        })
-      }
+      onClick={() => writeContract({ address: CONCLAVE_ADDRESS, abi: CONCLAVE_ABI, functionName: "finalizeRound", args: [roundId] })}
       disabled={isPending || isConfirming}
-      className="w-full py-2.5 rounded-lg bg-blue-700 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+      className="w-full text-[11px] px-3 py-2 rounded-md border border-[#1A1F3A] text-[#64748b] hover:text-[#94a3b8] hover:border-[#334155] disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
     >
       {isPending || isConfirming ? "Finalizing…" : "Finalize Round"}
     </button>

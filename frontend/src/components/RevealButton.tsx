@@ -7,8 +7,8 @@ export function RevealButton({ roundId }: { roundId: bigint }) {
 
   if (isSuccess) {
     return (
-      <div className="rounded-xl border border-green-800/50 bg-green-900/20 p-4">
-        <p className="text-green-400 text-sm font-medium">Consensus revealed on-chain.</p>
+      <div className="rounded-lg border border-[#22c55e]/20 bg-[#22c55e]/5 px-4 py-3">
+        <p className="text-xs text-[#22c55e] font-medium">Consensus revealed on-chain.</p>
       </div>
     );
   }
@@ -19,14 +19,11 @@ export function RevealButton({ roundId }: { roundId: bigint }) {
     <button
       onClick={revealConsensus}
       disabled={busy}
-      className="w-full py-2.5 rounded-lg bg-green-700 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+      className="w-full text-[11px] px-3 py-2 rounded-md border border-[#1A1F3A] text-[#64748b] hover:text-[#94a3b8] hover:border-[#334155] disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
     >
-      {decrypting
-        ? "Requesting Threshold Network…"
-        : isTxPending
-        ? "Publishing proof…"
-        : isConfirming
-        ? "Confirming…"
+      {decrypting ? "Requesting Threshold Network…"
+        : isTxPending ? "Publishing proof…"
+        : isConfirming ? "Confirming…"
         : "Reveal Consensus"}
     </button>
   );
