@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useAccount, useWalletClient } from "wagmi";
 import { useRound, useAgentStatus } from "@/hooks/useRound";
@@ -15,6 +15,7 @@ import { FhePipeline } from "@/components/FhePipeline";
 import { AgentList } from "@/components/AgentList";
 import { CONCLAVE_ADDRESS, CONCLAVE_ABI } from "@/lib/contract";
 import { Phase } from "@/types/round";
+import { parseTaskURI, type TaskData } from "@/lib/task";
 
 function ProtocolStrip({ round }: { round: NonNullable<ReturnType<typeof useRound>["round"]> }) {
   const phases = [
@@ -132,6 +133,7 @@ export default function RoundPage() {
   }
 
   const isCreator = address?.toLowerCase() === round.creator.toLowerCase();
+  const taskData = useMemo(() => parseTaskURI(round.taskURI), [round.taskURI]);
 
   return (
     <div className="max-w-4xl">
@@ -155,6 +157,32 @@ export default function RoundPage() {
             quorum={round.quorum}
             consensusScore={round.status === "REVEALED" ? round.consensusScore : null}
           />
+
+          {/* Task content (inline data URIs) */}
+          {taskData && (
+            <div className="glass rounded-xl p-5">
+              <p className="text-[10px] font-semibold tracking-widest text-[#475569] uppercase mb-3">Task</p>
+              {taskData.title && (
+                <p className="text-sm font-medium text-[#e2e8f0] mb-2">{taskData.title}</p>
+              )}
+              {taskData.description && (
+                <p className="text-xs text-[#64748b] leading-relaxed whitespace-pre-wrap">{taskData.description}</p>
+              )}
+              {taskData.rubric && Object.keys(taskData.rubric).length > 0 && (
+                <div className="mt-3 pt-3 border-t border-[#1A1F3A]">
+                  <p className="text-[10px] text-[#475569] font-mono mb-2">Rubric</p>
+                  <div className="space-y-1">
+                    {Object.entries(taskData.rubric).filter(([, v]) => v.trim()).map(([range, desc]) => (
+                      <div key={range} className="flex items-start gap-2 text-[11px]">
+                        <span className="text-[#c084fc] font-mono shrink-0 w-16">{range}</span>
+                        <span className="text-[#64748b]">{desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Agent actions */}
           {isConnected && isAgent && !hasVoted && round.phase === Phase.Voting && (
@@ -257,7 +285,7 @@ export default function RoundPage() {
               </div>
               <div>
                 <p className="text-[#334155]">Task</p>
-                <p className="font-mono text-[#475569] truncate text-[10px]">{round.taskURI}</p>
+                <p className="text-[#475569] text-[10px]">{taskData?.title || "External URI"}</p>
               </div>
             </div>
           </div>
