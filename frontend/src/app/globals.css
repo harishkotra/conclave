@@ -44,6 +44,61 @@
   }
 }
 
+/* ─── Protocol Animations ──────────────────────────────────────────── */
+
+@keyframes node-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+@keyframes flow-line {
+  0%   { stroke-dashoffset: 60; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes data-packet {
+  0%   { opacity: 0; transform: translateY(0); }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(40px); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes consensus-appear {
+  0%   { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes score-fill {
+  from { width: 0; }
+}
+
+@keyframes float-up {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Background topology lines */
+.bg-topology {
+  position: relative;
+}
+.bg-topology::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    /* horizontal lines */
+    repeating-linear-gradient(90deg, transparent, transparent 120px, rgba(192, 132, 252, 0.03) 120px, rgba(192, 132, 252, 0.03) 121px),
+    /* vertical lines */
+    repeating-linear-gradient(0deg, transparent, transparent 120px, rgba(192, 132, 252, 0.03) 120px, rgba(192, 132, 252, 0.03) 121px);
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* Scrollbar refinement */
 ::-webkit-scrollbar {
   width: 4px;
