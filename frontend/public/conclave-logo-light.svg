@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 32" fill="none">
+  <rect x="2" y="4" width="24" height="24" rx="5" stroke="#7c3aed" stroke-width="1.5" fill="rgba(124,58,237,0.08)"/>
+  <text x="14" y="21" text-anchor="middle" fill="#7c3aed" font-size="13" font-family="system-ui" font-weight="700">C</text>
+  <text x="34" y="21" fill="#0f172a" font-size="14" font-family="system-ui" font-weight="600" letter-spacing="-0.3">Conclave</text>
+</svg>

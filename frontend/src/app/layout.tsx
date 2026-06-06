@@ -6,6 +6,9 @@ import { ConnectButton } from "@/components/ConnectButton";
 export const metadata: Metadata = {
   title: "Conclave",
   description: "Confidential Multi-Agent Consensus Protocol",
+  icons: {
+    icon: "/conclave-mark.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,10 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <header className="border-b border-[#1A1F3A]">
             <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-md bg-[#c084fc]/10 border border-[#c084fc]/20 flex items-center justify-center">
-                  <span className="text-xs font-bold text-[#c084fc]">C</span>
-                </div>
-                <span className="font-semibold tracking-tight text-[#e2e8f0]">Conclave</span>
+                <img src="/conclave-logo-dark.svg" alt="Conclave" className="h-5 w-auto" />
                 <span className="hidden sm:block text-[11px] text-[#475569] tracking-wider uppercase">
                   Confidential Multi-Agent Consensus
                 </span>
