@@ -33,7 +33,7 @@ async function withRetry<T>(fn: () => Promise<T>, attempt = 1): Promise<T> {
 async function buildAgentContext(wallet: ethers.Wallet) {
   const { publicClient, walletClient } = await Ethers6Adapter(wallet.provider!, wallet);
   const config = createCofheConfig({
-    environment: "sepolia",
+    environment: "node",
     supportedChains: [sepoliaChain],
   });
   const client = createCofheClient(config);
