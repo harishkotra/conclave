@@ -5,23 +5,18 @@
 @layer base {
   body {
     background-color: #040816;
-    background-image:
-      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(88, 28, 135, 0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 40% at 80% 20%, rgba(124, 58, 237, 0.04) 0%, transparent 50%);
     color: #e2e8f0;
   }
 }
 
 @layer components {
-  /* Glass card — the primary container primitive */
+  /* Card — the primary container primitive */
   .glass {
     background: rgba(10, 15, 42, 0.6);
-    backdrop-filter: blur(2px);
     border: 1px solid rgba(30, 35, 60, 0.6);
   }
   .glass-hover {
     background: rgba(10, 15, 42, 0.6);
-    backdrop-filter: blur(2px);
     border: 1px solid rgba(30, 35, 60, 0.6);
   }
   .glass-hover:hover {
@@ -43,22 +38,9 @@
   }
   .step-dot-active {
     background: #c084fc;
-    box-shadow: 0 0 8px rgba(192, 132, 252, 0.3);
   }
   .step-dot-done {
     background: #22c55e;
-    box-shadow: 0 0 6px rgba(34, 197, 94, 0.2);
-  }
-
-  /* Consensus ring */
-  .consensus-ring {
-    position: relative;
-    width: 120px;
-    height: 120px;
-  }
-  .consensus-ring canvas {
-    position: absolute;
-    inset: 0;
   }
 }
 

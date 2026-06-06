@@ -64,7 +64,7 @@ export function FhePipeline({ phase, votesSubmitted, quorum, consensusScore }: P
               {/* Timeline connector */}
               <div className="flex flex-col items-center">
                 <div className={`w-2 h-2 rounded-full ${
-                  isDone ? "bg-[#22c55e]" : isActive ? "bg-[#c084fc] shadow-[0_0_6px_rgba(192,132,252,0.4)]" : "bg-[#1A1F3A]"
+                  isDone ? "bg-[#22c55e]" : isActive ? "bg-[#c084fc]" : "bg-[#1A1F3A]"
                 }`} />
                 {i < stages.length - 1 && (
                   <div className="w-px h-8 bg-[#1A1F3A]" />

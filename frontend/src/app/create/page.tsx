@@ -294,7 +294,7 @@ export default function CreatePage() {
                   revisionsEnabled ? "bg-[#c084fc]" : "bg-[#334155]"
                 }`} role="switch" aria-checked={revisionsEnabled}
               >
-                <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white transform transition-transform ${
                   revisionsEnabled ? "translate-x-4" : "translate-x-0"
                 }`} />
               </button>
